@@ -20,7 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
         validated_data['password'] = make_password(validated_data['password'])
         user = User.objects.create(**validated_data)
         return user
-    
+
 
 
 class UserLoginSerializer(serializers.Serializer):
@@ -52,8 +52,8 @@ class UserLoginSerializer(serializers.Serializer):
 
             return validation
         except User.DoesNotExist:
-            raise serializers.ValidationError("Invalid login credentials")      
-        
+            raise serializers.ValidationError("Invalid login credentials")
+
 
 class TableSerializer(serializers.ModelSerializer):
     class Meta:
@@ -62,7 +62,7 @@ class TableSerializer(serializers.ModelSerializer):
 class TableSerializerCreateUpdateDelete(serializers.ModelSerializer):
     class Meta:
         model = Table
-        fields = ['id','is_reserved','table_number', 'capacity','restaurant']        
+        fields = ['id','is_reserved','table_number', 'capacity','restaurant']
 
 class MenuSerializer(serializers.ModelSerializer):
     class Meta:
@@ -85,15 +85,25 @@ class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields = ['id','customer', 'restaurant', 'menu_items','Desert_items','table', 'reservation_time', 'total_price']
-        
+
 
 class RestaurantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Restaurant
         fields = ['id','user', 'name', 'image','description','city', 'street', 'phone_number']
-        
+
 
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
-        fields = ['id', 'created', 'text', 'User_id']        
+        fields = ['id', 'created', 'text', 'User_id']
+
+class CitySerializerCreateUpdateDelete(serializers.ModelSerializer):
+    class Meta:
+        model = city
+        fields = ['id','cityname']
+class StreetSerializerCreateUpdateDelete(serializers.ModelSerializer):
+    class Meta:
+        model = Street
+        fields = ['id','StreetName']
+

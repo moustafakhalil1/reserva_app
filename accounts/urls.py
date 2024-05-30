@@ -8,6 +8,8 @@ router = DefaultRouter()
 router.register(r'tables', TableViewSet, basename='table')
 router.register(r'menus', MenuViewSet, basename='menu')
 router.register(r'Desert', DesertViewSet, basename='Desert')
+router.register(r'City', CityViewSet, basename='City')
+router.register(r'Street', StreeViewSet, basename='Street')
 
 urlpatterns=[
     path('', include(router.urls)),
@@ -16,15 +18,20 @@ urlpatterns=[
     path('register/',AuthUserRegistrationView.as_view(),name='users'),
     path('login/',MobileAppLoginAPIView.as_view(),name='login'),
     path('restaurantsList/<int:pk>/',list_restaurants,name='list-restaurants'),
-    path('reservations/create/', ReservationCreateView.as_view(), name='reservation-create'),
+    path('reservations/create/<int:user_id>', ReservationCreateView.as_view(), name='reservation-create'),
     path('restaurants/<int:restaurant_id>/tables/', TableListView.as_view(), name='table-list'),
     path('restaurants/<int:restaurant_id>/menu/', MenuListView.as_view(), name='menu-list'),
     path('restaurants/<int:restaurant_id>/Desert/', DesertListView.as_view(), name='Desert-list'),
     # path('users', UserListView.as_view(), name='users'),
     path('restaurants/<int:user_id>/Reservations/', ReservationstListView.as_view(), name='Reservataion-list'),
     path('reservations/<int:reservation_id>/approve/', ApproveReservationAPIView.as_view(), name='approve-reservation'),
-   
+
     path('notifications/<int:user_id>/', UserNotificationsAPIView.as_view(), name='user-notifications'),
+
+
+    path('users/<int:user_id>/restaurants/', RestaurantByUserView.as_view(), name='restaurant-update'),
+    path('retrive_restaurants_id/<int:user_id>', RestaurantRetriveByUserView, name='restaurant-retirve'),
+
 
 
 ]

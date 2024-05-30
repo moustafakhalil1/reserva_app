@@ -40,8 +40,8 @@ class AuthUserRegistrationView(APIView):
                 'refresh_token': str(refresh_token),
                 'user': serializer.data
             })
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST) 
-    
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
 
 class MobileAppLoginAPIView(APIView):
     serializer_class = UserLoginSerializer
@@ -62,33 +62,50 @@ class MobileAppLoginAPIView(APIView):
                 'access_token': str(access_token),
                 'refresh_token': str(refresh_token),
                 'user': serializer.data
-            })    
-        
+            })
+
 
 class ReservationCreateView(generics.CreateAPIView):
-    queryset = Reservation.objects.all()    
+    queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         restaurant_id = request.data.get('restaurant')
+        user_id = self.kwargs['user_id']  # Fetching user_id from URL parameter
+
+        # Query the Customer model to get the customer_id associated with the user_id
+        try:
+            customer_id = Customer.objects.get(user_id=user_id).id
+        except Customer.DoesNotExist:
+            return Response({'error': 'Customer does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+
         tables = Table.objects.filter(restaurant_id=restaurant_id)
         menu_items = Menu.objects.filter(restaurant_id=restaurant_id)
 
         if not tables.exists() or not menu_items.exists():
             return Response({'error': 'No tables or menu items available for the given restaurant.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        return super().create(request, *args, **kwargs)
-    
+
+        # Create a mutable copy of request.data
+        mutable_data = request.data.copy()
+        # Add customer_id to the mutable copy
+        mutable_data['customer'] = customer_id
+
+        # Pass the modified data to serializer
+        serializer = self.get_serializer(data=mutable_data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     def perform_create(self, serializer):
         # Save the reservation
         reservation = serializer.save()
-        
+
          # Get the table associated with the reservation and mark it as reserved
         table = reservation.table
         table.is_reserved = True
         table.save()
-        
+
         # Create a notification for the restaurant
         restaurant = reservation.restaurant
         notification = Notification.objects.create(
@@ -96,7 +113,7 @@ class ReservationCreateView(generics.CreateAPIView):
             text=f"A new reservation has been made for {restaurant.name}.",
             User_id=restaurant.user,
         )
-        
+
         # Optionally, you can add users (e.g., restaurant staff) to the notification
         # notification.users.set(users_list)
         # notification.save()
@@ -118,8 +135,8 @@ class MenuViewSet(viewsets.ModelViewSet):
         restaurant_id = self.request.query_params.get('restaurant')
         if restaurant_id:
             return Menu.objects.filter(restaurant_id=restaurant_id)
-        return Menu.objects.all()    
-    
+        return Menu.objects.all()
+
 class TableListView(generics.ListAPIView):
     serializer_class = TableSerializer
     permission_classes = [IsAuthenticated]
@@ -134,8 +151,8 @@ class MenuListView(generics.ListAPIView):
 
     def get_queryset(self):
         restaurant_id = self.kwargs['restaurant_id']
-        return Menu.objects.filter(restaurant_id=restaurant_id)    
-    
+        return Menu.objects.filter(restaurant_id=restaurant_id)
+
 class DesertViewSet(viewsets.ModelViewSet):
     serializer_class = DesertSerializerCreateUpdateDelete
 
@@ -143,7 +160,7 @@ class DesertViewSet(viewsets.ModelViewSet):
         restaurant_id = self.request.query_params.get('restaurant')
         if restaurant_id:
             return Desert.objects.filter(restaurant_id=restaurant_id)
-        return Menu.objects.all()    
+        return Menu.objects.all()
 
 class DesertListView(generics.ListAPIView):
     serializer_class = DesertSerializer
@@ -151,7 +168,7 @@ class DesertListView(generics.ListAPIView):
 
     def get_queryset(self):
         restaurant_id = self.kwargs['restaurant_id']
-        return Desert.objects.filter(restaurant_id=restaurant_id)     
+        return Desert.objects.filter(restaurant_id=restaurant_id)
 
 class ReservationstListView(generics.ListAPIView):
     serializer_class = ReservationSerializer
@@ -159,10 +176,10 @@ class ReservationstListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.kwargs['user_id']
-        restaurant_id=Restaurant.objects.get(user=user)  
-        return Reservation.objects.filter(restaurant_id=restaurant_id)  
+        restaurant_id=Restaurant.objects.get(user=user)
+        return Reservation.objects.filter(restaurant_id=restaurant_id)
 
-@csrf_exempt    
+@csrf_exempt
 def list_restaurants(request,pk):
       # Extract token from request (assuming it's in the headers)
     token = request.headers.get('Authorization')
@@ -225,10 +242,10 @@ class ApproveReservationAPIView(APIView):
             User_id=reservation.customer.user,  # Notify the customer
         )
 
-        return Response({'message': 'Reservation approved.'}, status=status.HTTP_200_OK)    
+        return Response({'message': 'Reservation approved.'}, status=status.HTTP_200_OK)
 
 
-    
+
 #notication api
 
 
@@ -240,3 +257,38 @@ class UserNotificationsAPIView(generics.ListAPIView):
         user_id = self.kwargs.get('user_id')
         user = get_object_or_404(User, pk=user_id)
         return Notification.objects.filter(User_id=user)
+
+class RestaurantByUserView(generics.RetrieveUpdateAPIView):
+    queryset = Restaurant.objects.all()
+    serializer_class = RestaurantSerializer
+    permission_classes = [IsAuthenticated,]
+
+    def get_object(self):
+        user_id = self.kwargs['user_id']
+        return get_object_or_404(Restaurant, user_id=user_id)
+
+class CityViewSet(viewsets.ModelViewSet):
+    serializer_class = CitySerializerCreateUpdateDelete
+    permission_classes = (AllowAny, )
+
+    def get_queryset(self):
+
+        return city.objects.all()
+
+class StreeViewSet(viewsets.ModelViewSet):
+    serializer_class = StreetSerializerCreateUpdateDelete
+    permission_classes = (AllowAny, )
+
+    def get_queryset(self):
+
+        return Street.objects.all()
+@csrf_exempt
+def RestaurantRetriveByUserView(request, user_id):
+    try:
+        restaurant = Restaurant.objects.get(user=user_id)
+        restaurant_id = restaurant.pk
+        return JsonResponse({'restaurant_id': restaurant_id})
+    except Restaurant.DoesNotExist:
+        return JsonResponse({'error': 'Restaurant not found for the given user ID'}, status=404)
+
+
