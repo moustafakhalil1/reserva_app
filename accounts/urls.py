@@ -28,7 +28,6 @@ urlpatterns=[
 
     path('notifications/<int:user_id>/', UserNotificationsAPIView.as_view(), name='user-notifications'),
 
-
     path('users/<int:user_id>/restaurants/', RestaurantByUserView.as_view(), name='restaurant-update'),
     path('retrive_restaurants_id/<int:user_id>', RestaurantRetriveByUserView, name='restaurant-retirve'),
 

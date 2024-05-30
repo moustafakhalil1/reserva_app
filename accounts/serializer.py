@@ -84,7 +84,7 @@ class DesertSerializerCreateUpdateDelete(serializers.ModelSerializer):
 class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
-        fields = ['id','customer', 'restaurant', 'menu_items','Desert_items','table', 'reservation_time', 'total_price']
+        fields = ['id','customer','order_name', 'restaurant', 'menu_items','Desert_items','table', 'reservation_time', 'total_price']
 
 
 class RestaurantSerializer(serializers.ModelSerializer):

@@ -110,7 +110,7 @@ class ReservationCreateView(generics.CreateAPIView):
         restaurant = reservation.restaurant
         notification = Notification.objects.create(
             created=timezone.now(),
-            text=f"A new reservation has been made for {restaurant.name}.",
+            text=f"A new reservation has been made for {reservation.order_name}.",
             User_id=restaurant.user,
         )
 
